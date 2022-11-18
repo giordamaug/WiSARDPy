@@ -1,9 +1,7 @@
 #
-# Wikie Stonham and Aleksander Recognition Device - WiSARD
-# Aleksander, I. (1988) 
-#
-# Try on Optdigits:
-# python wisard.py -i dataset/iris.libsvm -n 2 -z 32
+# WiSARD in python: 
+# Classification and Regression
+# by Maurizio Giordano (2022)
 #
 import numpy as np
 from utilities import *
