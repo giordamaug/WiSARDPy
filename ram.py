@@ -5,7 +5,8 @@
 #
 
 class Ram:
-    wentry = {}
+    def __init__(self):
+        self.wentry = {}
     def __str__(self):
         return f"{self.wentry}"
     def getEntry(self, key):
