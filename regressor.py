@@ -5,6 +5,7 @@
 #
 import numpy as np
 from utilities import *
+import ram
 mypowers = 2**np.arange(32, dtype = np.uint32)[::]
 
 class WiSARDRegressor:
@@ -17,30 +18,35 @@ class WiSARDRegressor:
                 intuple[i] += mypowers[n_bit -1 - j] * X[map[((i * n_bit) + j) % size]]
         return intuple
     
-    def __init__(self,  nobits, size, classes = [0,1], map=-1, dblvl=0):
+    #def __init__(self,  nobits, size, map=-1, classes=[0,1], dblvl=0):
+    def __init__(self,  nobits, size, seed=-1, dblvl=0):
         self._nobits = nobits
         self._datatype = 'binary'
-        self._seed = map
+        self._seed = seed
         self._dblvl = dblvl
         self._retina_size = size
         self._nloc = mypowers[self._nobits]
-        self._classes = classes 
+        #self._classes = classes 
         self._nrams = int(size/self._nobits) if size % self._nobits == 0 else int(size/self._nobits + 1)
         self._mapping = np.arange(self._retina_size, dtype=int)
-        self._layers = [np.full((self._nrams, self._nloc),0) for c in classes]
-        if map > -1: np.random.seed(self._seed); np.random.shuffle(self._mapping)
+        #self._rams = [np.full((self._nrams, self._nloc),0) for c in classes]
+        self._rams = [ram.Ram() for i in range(self._nrams)] 
+        if seed > -1: np.random.seed(self._seed); np.random.shuffle(self._mapping)
         
     def train(self, X, y):
         ''' Learning '''
         intuple = self._mk_tuple(X, self._nrams, self._mapping, self._retina_size)
         for i in range(self._nrams):
-            self._layers[y][i][intuple[i]] = 1
+            #self._rams[y][i][intuple[i]] = 1
+            self._rams[i].updEntry(intuple[i], y)
 
     def test(self, X):
         ''' Testing '''
         intuple = self._mk_tuple(X, self._nrams, self._mapping, self._retina_size)
-        a = [[self._layers[y][i][intuple[i]] for i in range(self._nrams)].count(1) for y in self._classes]
-        return max(enumerate(a), key=(lambda x: x[1]))[0]
+        a = [self._rams[i].getEntry(intuple[i]) for i in range(self._nrams)]
+        print(a)
+        #a = [[self._rams[y][i][intuple[i]] for i in range(self._nrams)].count(1) for y in self._classes]
+        #return max(enumerate(a), key=(lambda x: x[1]))[0]
     
     def fit(self, X, y):
         if self._dblvl > 0: timing_init()
@@ -78,7 +84,7 @@ class WiSARDRegressor:
     def __str__(self):
         ''' Printing function'''
         rep = "WiSARD (Size: %d, NoBits: %d, Seed: %d, RAMs: %r)\n"%(self._retina_size, self._nobits,self._seed,self._nrams)
-        for i,l in enumerate(self._layers):  
+        for i,l in enumerate(self._rams):  
             rep += "[%d] "%(i)
             c = 0
             for r in l:
