@@ -10,16 +10,15 @@ mypowers = 2**np.arange(32, dtype = np.uint32)[::]
 
 class WiSARDRegressor:
     """WiSARD Regressor """
-    def _mk_tuple(self, X, n_ram, map, size):
-        n_bit = self._nobits
-        intuple = [0]*n_ram
-        for i in range(n_ram):
-            for j in range(n_bit):
-                intuple[i] += mypowers[n_bit -1 - j] * X[map[((i * n_bit) + j) % size]]
-        return intuple
+    def _mk_tuple(self, X):
+        addresses = [0]*self._nrams
+        for i in range(self._nrams):
+            for j in range(self._nobits):
+                addresses[i] += mypowers[self._nobits -1 - j] * X[self._mapping[((i * self._nobits) + j) % self._retina_size]]
+        return addresses
     
     #def __init__(self,  nobits, size, map=-1, classes=[0,1], dblvl=0):
-    def __init__(self,  nobits, size, seed=-1, dblvl=0):
+    def __init__(self,  nobits=4, size=128, seed=-1, dblvl=0):
         self._nobits = nobits
         self._datatype = 'binary'
         self._seed = seed
@@ -35,16 +34,17 @@ class WiSARDRegressor:
         
     def train(self, X, y):
         ''' Learning '''
-        intuple = self._mk_tuple(X, self._nrams, self._mapping, self._retina_size)
+        addresses = self._mk_tuple(X)
         for i in range(self._nrams):
             #self._rams[y][i][intuple[i]] = 1
-            self._rams[i].updEntry(intuple[i], y)
+            self._rams[i].updEntry(addresses[i], y)
 
     def test(self, X):
         ''' Testing '''
-        intuple = self._mk_tuple(X, self._nrams, self._mapping, self._retina_size)
-        res = [sum(i) for i in zip(*[self._rams[i].getEntry(intuple[i]) for i in range(self._nrams)])] 
-        return double(res[1])/double(res[0]) if res[0] != 0 else 0.0
+        addresses = self._mk_tuple(X)
+        res = [sum(i) for i in zip(*[self._rams[i].getEntry(addresses[i]) for i in range(self._nrams)])]
+        #print("res", [self._rams[i].getEntry(addresses[i]) for i in range(self._nrams)])
+        return float(res[1])/float(res[0]) if res[0] != 0 else 0.0
         #a = [[self._rams[y][i][intuple[i]] for i in range(self._nrams)].count(1) for y in self._classes]
         #return max(enumerate(a), key=(lambda x: x[1]))[0]
     
