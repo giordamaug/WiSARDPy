@@ -40,7 +40,7 @@ def timing_update(i,match,clr=color.BLUE,title='train',size=100, lasterr=None,er
     global tm_starttm_
     global tm_progress_
     tm,tme = compTime(time.time()-tm_starttm_,tm_progress_)
-    tm_progress_ = printProgressBar(title, tm, tme, clr, color.RED, i+1,match,tm_progress_,size, lasterr, error)
+    tm_progress_ = printProgressBar(title, tm, tme, clr, color.RED, i+1, match,tm_progress_,size, lasterr, error)
 
 def printProgressBar(title,time,etime,basecolor, cursorcolor, linecnt,match,progress,size, lasterr, error):
     barwidth = 70
