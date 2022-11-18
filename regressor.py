@@ -43,8 +43,8 @@ class WiSARDRegressor:
     def test(self, X):
         ''' Testing '''
         intuple = self._mk_tuple(X, self._nrams, self._mapping, self._retina_size)
-        a = [self._rams[i].getEntry(intuple[i]) for i in range(self._nrams)]
-        print(a)
+        res = [sum(i) for i in zip(*[self._rams[i].getEntry(intuple[i]) for i in range(self._nrams)])] 
+        return double(res[1])/double(res[0]) if res[0] != 0 else 0.0
         #a = [[self._rams[y][i][intuple[i]] for i in range(self._nrams)].count(1) for y in self._classes]
         #return max(enumerate(a), key=(lambda x: x[1]))[0]
     
@@ -66,18 +66,6 @@ class WiSARDRegressor:
         for i,sample in enumerate(X):
             y_pred = np.append(y_pred,[self.test(sample)])
             if self._dblvl > 0: timing_update(i,True,title='test  ',clr=color.GREEN,size=len(X))
-        if self._dblvl > 0: print()
-        return y_pred
-
-    def predict_ck(self,X, y):
-        if self._dblvl > 0: timing_init()
-        y_pred = np.array([])
-        delta = 0
-        for i,sample in enumerate(X):
-            res = self.test(sample)
-            delta += abs(y[i] - res)
-            y_pred = np.append(y_pred,[res])
-            if self._dblvl > 0: timing_update(i,True,title='test  ',clr=color.GREEN,size=len(X),error=delta/float(i+1))
         if self._dblvl > 0: print()
         return y_pred
 
