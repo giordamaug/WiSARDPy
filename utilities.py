@@ -1,7 +1,6 @@
 # coding: utf-8
 import sys, os
 import time
-import colored
 
 from sklearn.datasets import load_svmlight_file
 from sklearn.preprocessing import MinMaxScaler,LabelEncoder
@@ -11,9 +10,6 @@ from scipy.io import arff
 import urllib
 from io import StringIO
 from PIL import Image
-
-white_color = colored.fg('#ffffff') + colored.bg('#ffffff')
-black_color = colored.fg('#000000') + colored.bg('#000000')
 
 def path_leaf(path):
     head, tail = os.path.split(path)
@@ -104,17 +100,6 @@ def print_confmatrix(table,fieldsize=3,decimals=3):
         str += '│'
         print(str + '')
     print((' ' * fieldsize) + '└' + ('─' * fieldsize + '┴') * (nclasses-1) + ('─' * fieldsize) + '┘')
-
-def print_data(r,size,skip=' '):
-    rep = '\n'
-    for i,e in enumerate(r):
-        if e == 0: 
-            rep += black_color + '%s'%(skip) + colored.attr('reset')
-        else:
-            rep += white_color + '%s'%(skip) + colored.attr('reset')
-        if (i+1) % size == 0:
-            rep += '\n'
-    print(rep)
 
 def genCode(n):
     if n == 0:
