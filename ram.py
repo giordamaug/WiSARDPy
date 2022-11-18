@@ -5,13 +5,10 @@
 #
 
 class Ram:
-    int nlocs = 0
-    Dict wentry = {}
-    def __init__(self, nlocs):
-         self.nlocs = nlocs
+    wentry = {}
     def __str__(self):
-        return f"{self.nlocs}({self.age})"
+        return f"{self.wentry}"
     def getEntry(self, key):
-        return wentry[key] if key in wentry.keys() else None 
-    def setEntry(self, key, value):
-        return (wentry[key] := value)    
+        return self.wentry[key] if key in self.wentry.keys() else (0,0) 
+    def updEntry(self, key, value):
+        self.wentry[key] = (self.wentry[key][0] + 1, self.wentry[key][1] + value) if key in self.wentry.keys() else (1,value)
