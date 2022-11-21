@@ -47,6 +47,8 @@ regr = WiSARDRegressor(nobits=4, size=size, seed=0, dblvl=1)
 X = binarize(diabetes_X_train, size, 't')
 Xt = binarize(diabetes_X_test, size, 't')
 
+print(diabetes_X_train.shape, diabetes_y_train.shape)
+
 if False:
 	print(regr._mk_tuple(X[0]))
 	regr.train(X[0], diabetes_y_train[0])
