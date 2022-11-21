@@ -7,7 +7,7 @@ import numpy as np
 from utilities import *
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 import ram
-mypowers = 2**np.arange(32, dtype = np.uint32)[::]
+mypowers = 2**np.arange(65, dtype = np.uint64)[::]
 
 class Encoder():
 
@@ -23,6 +23,13 @@ class Encoder():
         for i in range(len(code2)):
             code2[i] += '1'
         return code1 + code2   
+
+    def _binarization(self, X): 
+        if not hasattr(self, '_ranges'):                     # set binarizaiotn range the first time
+            self._ranges = X.max(axis=0)-X.min(axis=0)
+            self._offsets = X.min(axis=0)
+            self._ranges[self._ranges == 0] = 1
+
 
     def _binarize(self, X, code='t', scale=True):
         # dataset normalization (scaling to 0-1)
@@ -59,6 +66,17 @@ class Encoder():
         return nX
         
     def _mk_tuple(self, X):
+        addresses = [0]*self._nrams
+        for i in range(self._nrams):
+            for j in range(self._nobits):
+                x = self._mapping[((i * self._nobits) + j) % self._retina_size]
+                index = x // self._notics
+                value = int((X[index] - self._offsets[index]) * self._notics / self._ranges[index])
+                if x % self._notics < value:
+                    addresses[i] += mypowers[self._nobits -1 - j]
+        return addresses
+
+    def _mk_tuple_old(self, X):
         addresses = [0]*self._nrams
         for i in range(self._nrams):
             for j in range(self._nobits):
@@ -112,7 +130,10 @@ class WiSARDRegressor(BaseEstimator, RegressorMixin, Encoder):
         self._rams = [ram.Ram() for _ in range(self._nrams)] 
         if self._maptype=="random":                 # random mapping
             np.random.shuffle(self._mapping)
-        X = self._binarize(X, code=self._code, scale=self._scale)
+        self._ranges = X.max(axis=0)-X.min(axis=0)
+        self._offsets = X.min(axis=0)
+        self._ranges[self._ranges == 0] = 1
+        #X = self._binarize(X, code=self._code, scale=self._scale)
         if self._debug: timing_init()
         delta = 0                                   # inizialize error
         for i,sample in enumerate(X):
@@ -126,7 +147,7 @@ class WiSARDRegressor(BaseEstimator, RegressorMixin, Encoder):
 
     def predict(self,X):
         if self._debug: timing_init()
-        X = self._binarize(X, code=self._code, scale=self._scale)
+        #X = self._binarize(X, code=self._code, scale=self._scale)
         y_pred = np.array([])
         for i,sample in enumerate(X):
             y_pred = np.append(y_pred,[self.test(sample)])
@@ -134,31 +155,22 @@ class WiSARDRegressor(BaseEstimator, RegressorMixin, Encoder):
         if self._debug: print()
         return y_pred
 
+    def __repr__(self): 
+        return "WiSARDRegressor(n_tics: %d, n_bits:, %d, n_rams: %d, random_state: %d, n_locs: %r, mapping: %r)\n"%(self._notics, self._nobits, self._nrams, self._seed,self._nloc, self._maptype)
+
     def __str__(self):
         ''' Printing function'''
-        rep = "WiSARD (Size: %d, NoBits: %d, Seed: %d, RAMs: %r)\n"%(self._retina_size, self._nobits,self._seed,self._nrams)
-        for i,l in enumerate(self._rams):  
-            rep += "[%d] "%(i)
-            c = 0
-            for r in l:
-                if c == 0: 
-                    rep += ""
-                else:
-                    rep += "    "
-                c += 1
-                for e in r:
-                    if e == 1:
-                        rep += '\x1b[5;34;46m' + '%s'%(self._skip) + '\x1b[0m'   # light blue
-                    else:
-                        rep += '\x1b[2;35;40m' + '%s'%(self._skip) + '\x1b[0m'   # black
-                rep += "\n"
-            rep += "\n"
-        return rep   
+        return "WiSARDRegressor(n_tics: %d, n_bits:, %d, n_rams: %d)\n"%(self._notics, self._nobits, self._nrams)
+
+    def printRams(self):
+        rep = ""
+        for j in range(self._nrams):
+            ep += f'{self._wiznet[cl][j]}'
+        return rep
 
     def get_params(self, deep=True):
         """Get parameters for this estimator."""
         return {"n_bits": self._nobits, "n_tics": self._notics, "mapping": self._mapping, "debug": self._debug, "code" : self._code, "random_state": self._seed
-              #,"bleaching": self.bleaching, "default_bleaching": self.b_def, "confidence_bleaching": self.conf_def, , "n_jobs": self.njobs
               }
 
     def getDataType(self):
@@ -197,6 +209,7 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, Encoder):
         self._code = code
         self._scale = scale
         self._nrams = 0
+        self._nclasses = 0
         self._maptype = mapping
         self._seed = random_state
         if self._seed > -1: np.random.seed(self._seed) 
@@ -208,13 +221,12 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, Encoder):
         ''' Learning '''
         addresses = self._mk_tuple(X)
         for i in range(self._nrams):
-            self._wiznet[y][i].updEntry(addresses[i], y)
+            self._wiznet[y][i].updEntry(addresses[i])
 
     def test(self, X):
         ''' Testing '''
         addresses = self._mk_tuple(X)
         res = [[1 if self._wiznet[y][i].getEntry(addresses[i]) > 0 else 0 for i in range(self._nrams)].count(1) for y in self._classes]
-        print(res)
         return max(enumerate(res), key=(lambda x: x[1]))[0]
     
     def fit(self, X, y):
@@ -224,10 +236,15 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, Encoder):
         self._classes, y = np.unique(y, return_inverse=True)
         self._nclasses = len(self._classes)
         for cl in self._classes:
+            #self._wiznet[cl] = [ram.VRam(self._nloc) for _ in range(self._nrams)] 
+            #self._wiznet[cl] = [ram.SRam(self._nloc) for _ in range(self._nrams)] 
             self._wiznet[cl] = [ram.WRam() for _ in range(self._nrams)] 
         if self._maptype=="random":                 # random mapping
             np.random.shuffle(self._mapping)
-        X = self._binarize(X, code=self._code, scale=self._scale)
+        self._ranges = X.max(axis=0)-X.min(axis=0)
+        self._offsets = X.min(axis=0)
+        self._ranges[self._ranges == 0] = 1
+        #X = self._binarize(X, code=self._code, scale=self._scale)
         if self._debug: timing_init()
         delta = 0                                   # inizialize error
         for i,sample in enumerate(X):
@@ -241,7 +258,7 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, Encoder):
 
     def predict(self,X):
         if self._debug: timing_init()
-        X = self._binarize(X, code=self._code, scale=self._scale)
+        #X = self._binarize(X, code=self._code, scale=self._scale)
         y_pred = np.array([])
         for i,sample in enumerate(X):
             y_pred = np.append(y_pred,[self.test(sample)])
@@ -249,19 +266,26 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, Encoder):
         if self._debug: print()
         return y_pred
 
+    def __repr__(self): 
+        return "WiSARDClassifier(n_tics: %d, n_bits:, %d, n_rams: %d, random_state: %d, n_locs: %r, mapping: %r)\n"%(self._notics, self._nobits, self._nrams, self._seed,self._nloc, self._maptype)
+
     def __str__(self):
         ''' Printing function'''
-        rep = "WiSARD (Size: %d, NoBits: %d, Seed: %d, RAMs: %r)\n"%(self._retina_size, self._nobits,self._seed,self._nrams)
-        for k,v in self._wiznet.items():
-            for ram in v:  
-                rep += f"{ram.wentry}"
-        return f'{rep}'   
+        return "WiSARDClassifier(n_tics: %d, n_bits:, %d, n_rams: %d)\n"%(self._notics, self._nobits, self._nrams)
+
+    def printWiznet(self):
+        rep = ""
+        for cl in range(self._nclasses):
+            rep += f'[{cl} '
+            for j in range(self._nrams):
+                rep += f'{self._wiznet[cl][j]}'
+            rep += '\n'
+        return rep
 
     def get_params(self, deep=True):
         """Get parameters for this estimator."""
             
         return {"n_bits": self._nobits, "n_tics": self._notics, "mapping": self._maptype, "debug": self._debug, "code" : self._code, "random_state": self._seed
-              #,"bleaching": self.bleaching, "default_bleaching": self.b_def, "confidence_bleaching": self.conf_def, , "n_jobs": self.njobs
               }
 
     def getMapping(self):
