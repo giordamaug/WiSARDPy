@@ -4,12 +4,13 @@ import time
 
 from sklearn.datasets import load_svmlight_file
 from sklearn.preprocessing import MinMaxScaler,LabelEncoder
+import matplotlib.pyplot as plt
+import itertools
 import scipy.sparse as sps
 import numpy as np
 from scipy.io import arff
 import urllib
 from io import StringIO
-from PIL import Image
 
 def path_leaf(path):
     head, tail = os.path.split(path)
@@ -77,30 +78,36 @@ def compTime(deltatime,progress):
     tme = "{:0>2}:{:0>2}:{:02.0f}".format(int(hourse),int(minutese),secondse)
     return tm,tme
 
-def print_confmatrix(table,fieldsize=3,decimals=3):
-    nclasses = len(table)
-    hfrmt = '{0: >%d}' % fieldsize
-    dfrmt = '%%%dd' % fieldsize
-    ffrmt = '%%%d.0%df' % (fieldsize,decimals)
-    str = '\n' + ' ' * fieldsize
-    for c in range(nclasses):
-        str +=  ' '  + color.BOLD + hfrmt.format(c) + color.END
-    print(str)
-    print((' ' * fieldsize) + '┌' + ('─' * fieldsize + '┬') * (nclasses-1) + ('─' * fieldsize) + '┐')
-    for k in range(nclasses):
-        str = color.BOLD + hfrmt.format(k) + color.END
-        for j in range(nclasses):
-            if table[k][j]==0:
-                str += '│' + (' '* fieldsize)
-                continue
-            if j==k:
-                str += '│' + dfrmt % (table[k][j])
-            else:
-                str += '│' + color.RED + dfrmt % (table[k][j]) + color.END
-        str += '│'
-        print(str + '')
-    print((' ' * fieldsize) + '└' + ('─' * fieldsize + '┴') * (nclasses-1) + ('─' * fieldsize) + '┘')
+def plot_confusion_matrix(cm, classes,
+                        normalize=False,
+                        title='Confusion matrix',
+                        cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        title += " (Normalized)"
+    else:
+        title += " (No Normalization)"
 
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, cm[i, j],
+                    horizontalalignment="center",
+                    color="white" if cm[i, j] > thresh else "black")
+
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+        
 def genCode(n):
     if n == 0:
         return ['']
@@ -115,31 +122,6 @@ def genCode(n):
     for i in range(len(code2)):
         code2[i] += '1'
     return code1 + code2   
-
-def read_pics_dataset(rootdir, labels=[0,1]):
-    dirs = next(os.walk(rootdir))[1]
-    X = np.empty([0,1024],dtype=int)
-    y = np.empty([0],dtype=int)
-    for dir in dirs:
-        if int(dir) in labels:
-            for f in os.listdir(os.path.join(rootdir,dir)):
-                if not f.startswith('.'):
-                    filename = os.path.join(rootdir,dir,f)
-                    if os.path.isfile(filename):
-                        img = Image.open(filename).convert('L')
-                        np_img = np.array(img)
-                        #np_img = misc.imread(filename)
-                        np_img = ~np_img
-                        np_img[np_img > 0] = 1
-                        np_img = np_img.flatten()
-                        X = np.row_stack((X, np_img))
-                        y = np.append(y, [int(dir)])
-    return X,y
-
-def unison_shuffled_copies(a, b):
-    assert len(a) == len(b)
-    p = np.random.permutation(len(a))
-    return a[p], b[p]
 
 def is_url(url):
     return urllib.parse.urlparse(url).scheme != ""
