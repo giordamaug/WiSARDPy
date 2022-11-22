@@ -4,9 +4,9 @@
 # by Maurizio Giordano (2022)
 #
 import numpy as np
-from utilities import *
+from .utilities import *
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
-import ram
+import .ram
 mypowers = 2**np.arange(65, dtype = np.uint64)[::]
 
 class WiSARDEstimator():
