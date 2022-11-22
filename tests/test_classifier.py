@@ -23,7 +23,7 @@ parser.add_argument('-i', "--inputfile", dest='inputfile', metavar='<input file>
 parser.add_argument('-b', "--nbits", dest='nbits', metavar='<no of bits>', type=int, help='number of bits (default: 4)' , default=4, required=False)
 parser.add_argument('-z', "--ntics", dest='ntics', metavar='<no of tics>', type=int, help='number of tics (default: 128)' , default=128, required=False)
 parser.add_argument('-c', "--cvfold", dest='cvfold', metavar='<no of cv folds>', type=int, help='number of folds' , required=False)
-parser.add_argument('-t', "--testsize", dest='testsize', metavar='<testsize>', type=int, default=0.25, help='testsize (in %)' , required=False)
+parser.add_argument('-t', "--testsize", dest='testsize', metavar='<testsize>', type=int, default=20, help='testsize (in %)' , required=False)
 parser.add_argument('-p', "--jobs", dest='jobs', metavar='<no of parallel jobs>', type=int, help='number of parallel jobs' , required=False)
 parser.add_argument('-s', "--seed", dest='seed', metavar='<seed>', type=int, help='seed (default: 0)' , default=0, required=False)
 parser.add_argument('-T', "--targetname", dest='targetname', metavar='<targetname>', type=str, help='target name (default: class)', default='class', required=False)
@@ -57,16 +57,18 @@ elif args.method == 'RF':
 
 start = time.time()
 if args.cvfold is None:
+	print(f"Train/Test split ({args.testsize / 100.0}) ...")
 	X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = args.testsize / 100.0, random_state=0)
 	y_pred = clf.fit(X_train, y_train).predict(X_test)
 	targets = y_test
 else:
+	print(f"{args.cvfold}-fold Cross Validation...")
 	y_pred = cross_val_predict(clf, X, y, cv=args.cvfold)
 	targets = y
 print("--- %s seconds ---" % (time.time() - start))
 print(f'{clf}')
 
-print(f"Classification report: {metrics.classification_report(targets, y_pred, target_names=classes)}")
+print(f"Classification report: {metrics.classification_report(targets, y_pred)}")
 cm = metrics.confusion_matrix(targets, y_pred)
 print(cm)
 if args.display:
