@@ -22,6 +22,6 @@ setup(name                = 'wisardpy',
                         'numpy>=1.14.5',
                         'matplotlib>=3.3.2'
                         ],
-      packages            = ['base'],
+      packages            = ['wisardpy'],
       url='https://github.com/giordamaug/WiSARDpy',
       )
