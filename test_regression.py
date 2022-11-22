@@ -23,6 +23,7 @@ parser.add_argument('-i', "--inputfile", dest='inputfile', metavar='<input file>
 parser.add_argument('-b', "--nbits", dest='nbits', metavar='<no of bits>', type=int, help='number of bits (default: 4)' , default=4, required=False)
 parser.add_argument('-z', "--ntics", dest='ntics', metavar='<no of tics>', type=int, help='number of tics (default: 128)' , default=128, required=False)
 parser.add_argument('-c', "--cvfold", dest='cvfold', metavar='<no of cv folds>', type=int, help='number of folds' , required=False)
+parser.add_argument('-t', "--testsize", dest='testsize', metavar='<testsize>', type=int, default=10, help='testsize (in %)' , required=False)
 parser.add_argument('-p', "--jobs", dest='jobs', metavar='<no of parallel jobs>', type=int, help='number of parallel jobs' , required=False)
 parser.add_argument('-s', "--seed", dest='seed', metavar='<seed>', type=int, help='seed (default: 0)' , default=0, required=False)
 parser.add_argument('-m', "--maptype", dest='maptype', metavar='<maptype>', type=str, help='mapping type (default: random, choice: random|linear)', choices=['random', 'linear'], default='random', required=False)
@@ -40,8 +41,6 @@ labelname = args.targetname
 X = np.array(df.drop(labelname, axis=1))
 y = np.array(df[labelname])
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10) 
-
 if args.method == 'RF':
 	regr = RandomForestRegressor()
 elif args.method == 'LGBM':
@@ -53,21 +52,24 @@ else:
 
 start = time.time()
 if args.cvfold is None:
+	print(f"Train/Test split ({args.testsize / 100.0}) ...")
+	X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=args.testsize / 100.0) 
 	y_pred = regr.fit(X_train, y_train).predict(X_test)
 	targets = y_test
 else:
-	y_pred = cross_val_predict(regf, X, y, cv=args.cvfold)
+	print(f"{args.cvfold}-fold Cross Validation...")
+	y_pred = cross_val_predict(regr, X, y, cv=args.cvfold)
 	targets = y
 print("--- %s seconds ---" % (time.time() - start))
 print(regr)
 
-print(f"Mean squared error: {round(metrics.mean_squared_error(y_test, y_pred),3)}")
-print(f"Coefficient of determination: {round(metrics.r2_score(y_test, y_pred)*100,2)} %")
+print(f"Mean squared error: {round(metrics.mean_squared_error(targets, y_pred),3)}")
+print(f"Coefficient of determination: {round(metrics.r2_score(targets, y_pred)*100,2)} %")
 if args.display:
 	# visualizing in a plot
-	x_ax = range(len(y_test))
+	x_ax = range(len(targets))
 	plt.figure(figsize=(12, 6))
-	plt.plot(x_ax, y_test, label="original")
+	plt.plot(x_ax, targets, label="original")
 	plt.plot(x_ax, y_pred, label="predicted")
 	plt.title("Boston dataset test and predicted data")
 	plt.xlabel('X')
