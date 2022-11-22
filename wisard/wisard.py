@@ -6,7 +6,7 @@
 import numpy as np
 from .utilities import *
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
-import .ram
+from .ram import *
 mypowers = 2**np.arange(65, dtype = np.uint64)[::]
 
 class WiSARDEstimator():
@@ -68,7 +68,7 @@ class WiSARDRegressor(BaseEstimator, RegressorMixin, WiSARDEstimator):
         self._retina_size = self._notics * len(X[0])   # set retin size (# feature x # of tics)
         self._nrams = int(self._retina_size/self._nobits) if self._retina_size % self._nobits == 0 else int(self._retina_size/self._nobits + 1)
         self._mapping = np.arange(self._retina_size, dtype=int)
-        self._rams = [ram.Ram() for _ in range(self._nrams)] 
+        self._rams = [WRam() for _ in range(self._nrams)] 
         if self._maptype=="random":                 # random mapping
             np.random.shuffle(self._mapping)
         self._ranges = X.max(axis=0)-X.min(axis=0)
@@ -175,9 +175,9 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, WiSARDEstimator):
         self._classes, y = np.unique(y, return_inverse=True)
         self._nclasses = len(self._classes)
         for cl in self._classes:
-            #self._wiznet[cl] = [ram.VRam(self._nloc) for _ in range(self._nrams)] alternative Ram implementations
-            #self._wiznet[cl] = [ram.SRam(self._nloc) for _ in range(self._nrams)] 
-            self._wiznet[cl] = [ram.WRam() for _ in range(self._nrams)] 
+            #self._wiznet[cl] = [VRam(self._nloc) for _ in range(self._nrams)] alternative Ram implementations
+            #self._wiznet[cl] = [SRam(self._nloc) for _ in range(self._nrams)] 
+            self._wiznet[cl] = [WRam() for _ in range(self._nrams)] 
         if self._maptype=="random":                 # random mapping
             np.random.shuffle(self._mapping)
         self._ranges = X.max(axis=0)-X.min(axis=0)
