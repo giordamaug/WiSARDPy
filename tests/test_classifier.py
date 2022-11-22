@@ -14,7 +14,6 @@ import sklearn.metrics as metrics
 from lightgbm import LGBMClassifier
 from wisardpy.base import WiSARDClassifier
 from sklearn.ensemble import RandomForestClassifier
-import utilities as utils
 import time 
 import argparse
 
