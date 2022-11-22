@@ -109,7 +109,7 @@ class WiSARDRegressor(BaseEstimator, RegressorMixin, WiSARDEstimator):
 
     def get_params(self, deep=True):
         """Get parameters for this estimator."""
-        return {"n_bits": self._nobits, "n_tics": self._notics, "mapping": self._mapping, "debug": self._debug, "code" : self._code, "random_state": self._seed
+        return {"n_bits": self._nobits, "n_tics": self._notics, "mapping": self._maptype, "debug": self._debug, "code" : self._code, "random_state": self._seed
               }
 
     def getDataType(self):
