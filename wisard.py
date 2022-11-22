@@ -9,62 +9,10 @@ from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 import ram
 mypowers = 2**np.arange(65, dtype = np.uint64)[::]
 
-class Encoder():
+class WiSARDEstimator():
+    """WiSARD Encoder """
 
-    def _genCode(self, n):
-        if n == 0:
-            return ['']
-        code1 = self._genCode(n-1)
-        code2 = []
-        for codeWord in code1:
-            code2 = [codeWord] + code2
-        for i in range(len(code1)):
-            code1[i] += '0'
-        for i in range(len(code2)):
-            code2[i] += '1'
-        return code1 + code2   
-
-    def _binarization(self, X): 
-        if not hasattr(self, '_ranges'):                     # set binarizaiotn range the first time
-            self._ranges = X.max(axis=0)-X.min(axis=0)
-            self._offsets = X.min(axis=0)
-            self._ranges[self._ranges == 0] = 1
-
-
-    def _binarize(self, X, code='t', scale=True):
-        # dataset normalization (scaling to 0-1)
-        if scale:
-            scaler = MinMaxScaler(feature_range=(0.0, 1.0))
-            X = scaler.fit_transform(X)
-            X = X.astype(np.float)
-
-        # binarize (histogram)
-        tX = (X * self._retina_size).astype(np.int32)
-
-        if code == 'g':
-            ticsize = self._retina_size.bit_length()
-            nX = np.zeros([tX.shape[0],tX.shape[1]*ticsize], dtype=np.int)
-            graycode = genCode(ticsize)
-            for r in range(tX.shape[0]):
-                newRow = [int(e) for e in list(''.join([graycode[tX[r,i]] for i in range(tX.shape[1])]))]
-                for i in range(tX.shape[1]*ticsize):
-                    nX[r,i] = newRow[i]
-        elif code == 't':
-            nX = np.zeros([tX.shape[0],tX.shape[1]*self._retina_size], dtype=np.int)
-            for r in range(tX.shape[0]):
-                for i in range(tX.shape[1]*self._retina_size):
-                    if i % self._retina_size < tX[r,int(i / self._retina_size)]:
-                        nX[r,i] = 1
-        elif code == 'c':
-            nX = np.zeros([tX.shape[0],tX.shape[1]*size], dtype=np.int)
-            for r in range(tX.shape[0]):
-                for i in range(tX.shape[1]*self._retina_size):
-                    if i % self._retina_size + 1== tX[r,int(i / self._retina_size)]:
-                        nX[r,i] = 1
-        else:
-            raise Exception('Unsupported data code!')
-        return nX
-        
+    # Binarize input (thermomer encoding) terand generates address tuple for Ram access
     def _mk_tuple(self, X):
         addresses = [0]*self._nrams
         for i in range(self._nrams):
@@ -76,14 +24,7 @@ class Encoder():
                     addresses[i] += mypowers[self._nobits -1 - j]
         return addresses
 
-    def _mk_tuple_old(self, X):
-        addresses = [0]*self._nrams
-        for i in range(self._nrams):
-            for j in range(self._nobits):
-                addresses[i] += mypowers[self._nobits -1 - j] * X[self._mapping[((i * self._nobits) + j) % self._retina_size]]
-        return addresses
-
-class WiSARDRegressor(BaseEstimator, RegressorMixin, Encoder):
+class WiSARDRegressor(BaseEstimator, RegressorMixin, WiSARDEstimator):
     """WiSARD Regressor """
     
     #def __init__(self,  nobits, size, map=-1, classes=[0,1], dblvl=0):
@@ -133,7 +74,6 @@ class WiSARDRegressor(BaseEstimator, RegressorMixin, Encoder):
         self._ranges = X.max(axis=0)-X.min(axis=0)
         self._offsets = X.min(axis=0)
         self._ranges[self._ranges == 0] = 1
-        #X = self._binarize(X, code=self._code, scale=self._scale)
         if self._debug: timing_init()
         delta = 0                                   # inizialize error
         for i,sample in enumerate(X):
@@ -147,7 +87,6 @@ class WiSARDRegressor(BaseEstimator, RegressorMixin, Encoder):
 
     def predict(self,X):
         if self._debug: timing_init()
-        #X = self._binarize(X, code=self._code, scale=self._scale)
         y_pred = np.array([])
         for i,sample in enumerate(X):
             y_pred = np.append(y_pred,[self.test(sample)])
@@ -188,7 +127,7 @@ class WiSARDRegressor(BaseEstimator, RegressorMixin, Encoder):
     def getNoRams(self):
         return self._nrams
 
-class WiSARDClassifier(BaseEstimator, ClassifierMixin, Encoder):
+class WiSARDClassifier(BaseEstimator, ClassifierMixin, WiSARDEstimator):
     """WiSARD Regressor """
     
     def __init__(self,  n_bits=8, n_tics=256, random_state=0, mapping='random', code='t', scale=True, debug=False):
@@ -236,7 +175,7 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, Encoder):
         self._classes, y = np.unique(y, return_inverse=True)
         self._nclasses = len(self._classes)
         for cl in self._classes:
-            #self._wiznet[cl] = [ram.VRam(self._nloc) for _ in range(self._nrams)] 
+            #self._wiznet[cl] = [ram.VRam(self._nloc) for _ in range(self._nrams)] alternative Ram implementations
             #self._wiznet[cl] = [ram.SRam(self._nloc) for _ in range(self._nrams)] 
             self._wiznet[cl] = [ram.WRam() for _ in range(self._nrams)] 
         if self._maptype=="random":                 # random mapping
@@ -244,7 +183,6 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, Encoder):
         self._ranges = X.max(axis=0)-X.min(axis=0)
         self._offsets = X.min(axis=0)
         self._ranges[self._ranges == 0] = 1
-        #X = self._binarize(X, code=self._code, scale=self._scale)
         if self._debug: timing_init()
         delta = 0                                   # inizialize error
         for i,sample in enumerate(X):
@@ -258,7 +196,6 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, Encoder):
 
     def predict(self,X):
         if self._debug: timing_init()
-        #X = self._binarize(X, code=self._code, scale=self._scale)
         y_pred = np.array([])
         for i,sample in enumerate(X):
             y_pred = np.append(y_pred,[self.test(sample)])
@@ -284,7 +221,6 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, Encoder):
 
     def get_params(self, deep=True):
         """Get parameters for this estimator."""
-            
         return {"n_bits": self._nobits, "n_tics": self._notics, "mapping": self._maptype, "debug": self._debug, "code" : self._code, "random_state": self._seed
               }
 

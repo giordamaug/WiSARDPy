@@ -1,3 +1,8 @@
+#
+# WiSARD in python: 
+# Classification and Regression
+# by Maurizio Giordano (2022)
+#
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -45,21 +50,29 @@ elif args.method == 'WNN':
 	regr = WiSARDRegressor(n_bits=args.nbits, n_tics=args.ntics, random_state=args.seed, mapping=args.maptype, code='t', scale=True, debug=True)
 else:
 	raise Exception("Wron regression method")
-regr.fit(X_train, y_train)
-y_pred = regr.predict(X_test)
+
+start = time.time()
+if args.cvfold is None:
+	y_pred = regr.fit(X_train, y_train).predict(X_test)
+	targets = y_test
+else:
+	y_pred = cross_val_predict(regf, X, y, cv=args.cvfold)
+	targets = y
+print("--- %s seconds ---" % (time.time() - start))
 print(regr)
 
 print(f"Mean squared error: {round(metrics.mean_squared_error(y_test, y_pred),3)}")
 print(f"Coefficient of determination: {round(metrics.r2_score(y_test, y_pred)*100,2)} %")
-# visualizing in a plot
-x_ax = range(len(y_test))
-plt.figure(figsize=(12, 6))
-plt.plot(x_ax, y_test, label="original")
-plt.plot(x_ax, y_pred, label="predicted")
-plt.title("Boston dataset test and predicted data")
-plt.xlabel('X')
-plt.ylabel('Price')
-plt.legend(loc='best',fancybox=True, shadow=True)
-plt.grid(True)
-plt.show()  
+if args.display:
+	# visualizing in a plot
+	x_ax = range(len(y_test))
+	plt.figure(figsize=(12, 6))
+	plt.plot(x_ax, y_test, label="original")
+	plt.plot(x_ax, y_pred, label="predicted")
+	plt.title("Boston dataset test and predicted data")
+	plt.xlabel('X')
+	plt.ylabel('Price')
+	plt.legend(loc='best',fancybox=True, shadow=True)
+	plt.grid(True)
+	plt.show()  
 

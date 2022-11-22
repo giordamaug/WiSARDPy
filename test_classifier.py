@@ -1,3 +1,8 @@
+#
+# WiSARD in python: 
+# Classification and Regression
+# by Maurizio Giordano (2022)
+#
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -20,6 +25,7 @@ parser.add_argument('-z', "--ntics", dest='ntics', metavar='<no of tics>', type=
 parser.add_argument('-c', "--cvfold", dest='cvfold', metavar='<no of cv folds>', type=int, help='number of folds' , required=False)
 parser.add_argument('-p', "--jobs", dest='jobs', metavar='<no of parallel jobs>', type=int, help='number of parallel jobs' , required=False)
 parser.add_argument('-s', "--seed", dest='seed', metavar='<seed>', type=int, help='seed (default: 0)' , default=0, required=False)
+parser.add_argument('-T', "--targetname", dest='targetname', metavar='<targetname>', type=str, help='target name (default: class)', default='class', required=False)
 parser.add_argument('-m', "--maptype", dest='maptype', metavar='<maptype>', type=str, help='mapping type (default: random, choice: random|linear)', choices=['random', 'linear'], default='random', required=False)
 parser.add_argument('-M', "--method", dest='method', metavar='<method>', type=str, help='classifier name (default: RF, choice: RF|LGBM|WNN)', choices=['RF', 'WNN', 'LGBM'], default='WNN', required=False)
 parser.add_argument('-D', "--debug", action='store_true', required=False)
@@ -32,7 +38,7 @@ args = parser.parse_args()
 df = pd.read_csv(args.inputfile)
 print(df.head())
 
-labelname = 'species'
+labelname = args.targetname
 X = np.array(df.drop(labelname, axis=1))
 le = preprocessing.LabelEncoder()
 y = le.fit_transform(np.array(df[labelname]))
