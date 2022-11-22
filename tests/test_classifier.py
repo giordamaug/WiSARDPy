@@ -46,14 +46,12 @@ classes = le.classes_
 
 print(f'Datasets dimensions: X={X.shape}, y={tuple(classes)}')
 
-method = 'WNN'
-print(f'Classification with method= "{method}"')
-
-if method == 'LGBM':
+print(f'Classification with method= "{args.method}"')
+if args.method == 'LGBM':
 	clf = LGBMClassifier()
-elif method == 'WNN':
+elif args.method == 'WNN':
 	clf = WiSARDClassifier(n_bits=args.nbits, n_tics=args.ntics, random_state=args.seed, mapping=args.maptype, code='t', scale=True, debug=args.debug)
-elif method == 'RF':
+elif args.method == 'RF':
     clf = RandomForestClassifier()
 
 start = time.time()
