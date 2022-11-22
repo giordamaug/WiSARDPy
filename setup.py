@@ -11,10 +11,17 @@ setup(name                = 'wisardpy',
           """,
       platforms           = ['Mac OSX', 'POSIX',],
       classifiers         = [
-                             'Machine Learning',
+                             "Programming Language :: Python :: 3",
+                             "Operating System :: OS Independent"
                              ],
       license             = 'GNU Lesser General Public License v2 or later (LGPLv2+)',
 
-      packages            = find_packages(include=['wisardpy', 'wisardpy.*']),
+      install_requires=[
+                        'scipy>=1.5.2',
+                        'scikit_learn>=1.0.2',
+                        'numpy>=1.14.5',
+                        'matplotlib>=3.3.2'
+                        ],
+      packages            = ['base'],
       url='https://github.com/giordamaug/WiSARDpy',
       )
