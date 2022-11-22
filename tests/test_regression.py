@@ -70,7 +70,7 @@ if args.display:
 	plt.figure(figsize=(12, 6))
 	plt.plot(x_ax, targets, label="original")
 	plt.plot(x_ax, y_pred, label="predicted")
-	plt.title("Boston dataset test and predicted data")
+	plt.title("Dataset test and predicted data")
 	plt.xlabel('X')
 	plt.ylabel('Price')
 	plt.legend(loc='best',fancybox=True, shadow=True)
