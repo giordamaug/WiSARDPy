@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split, cross_val_predict
 from sklearn.linear_model import LinearRegression
 import sklearn.metrics as metrics
 from lightgbm import LGBMRegressor
-from wisard import WiSARDRegressor
+from wisardpy.base import WiSARDRegressor
 from sklearn.ensemble import RandomForestRegressor
 import utilities as utils
 import time 
