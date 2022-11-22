@@ -13,6 +13,7 @@ from sklearn.linear_model import LinearRegression
 import sklearn.metrics as metrics
 from lightgbm import LGBMClassifier
 from wisardpy.base import WiSARDClassifier
+from wisardpy.utilities import plot_confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
 import time 
 import argparse
@@ -70,5 +71,5 @@ cm = metrics.confusion_matrix(targets, y_pred)
 print(cm)
 if args.display:
 	plt.figure()
-	utils.plot_confusion_matrix(cm, classes=classes,title='Confusion matrix')
+	plot_confusion_matrix(cm, classes=classes,title='Confusion matrix')
 	plt.show()
