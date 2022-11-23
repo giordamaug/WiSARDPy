@@ -28,6 +28,7 @@ parser.add_argument('-p', "--jobs", dest='jobs', metavar='<no of parallel jobs>'
 parser.add_argument('-s', "--seed", dest='seed', metavar='<seed>', type=int, help='seed (default: 0)' , default=0, required=False)
 parser.add_argument('-T', "--targetname", dest='targetname', metavar='<targetname>', type=str, help='target name (default: class)', default='class', required=False)
 parser.add_argument('-m', "--maptype", dest='maptype', metavar='<maptype>', type=str, help='mapping type (default: random, choice: random|linear)', choices=['random', 'linear'], default='random', required=False)
+parser.add_argument('-B', "--bleaching", help='enable bleaching (disabled by default)', action='store_true', default=False, required=False)
 parser.add_argument('-M', "--method", dest='method', metavar='<method>', type=str, help='classifier name (default: RF, choice: RF|LGBM|WNN)', choices=['RF', 'WNN', 'LGBM'], default='WNN', required=False)
 parser.add_argument('-D', "--debug", action='store_true', required=False)
 parser.add_argument('-S', "--save-embedding", dest='saveembedding',  action='store_true', required=False)
@@ -51,7 +52,7 @@ print(f'Classification with method= "{args.method}"')
 if args.method == 'LGBM':
 	clf = LGBMClassifier()
 elif args.method == 'WNN':
-	clf = WiSARDClassifier(n_bits=args.nbits, n_tics=args.ntics, random_state=args.seed, mapping=args.maptype, code='t', scale=True, debug=args.debug)
+	clf = WiSARDClassifier(n_bits=args.nbits, n_tics=args.ntics, random_state=args.seed, mapping=args.maptype, bleaching=args.bleaching, code='t', scale=True, debug=args.debug)
 elif args.method == 'RF':
     clf = RandomForestClassifier()
 
