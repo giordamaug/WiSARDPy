@@ -221,7 +221,7 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, WiSARDEstimator):
         if result_sum==0.0:
             result = np.array(np.sum(res_disc, axis=1))/float(self._nrams)
         else:
-            result = np.array(result_partial)/result_sum
+            result = np.array(result_partial)/float(result_sum)
         return max(enumerate(result), key=(lambda x: x[1]))[0]     
 
     def fit(self, X, y):
@@ -231,8 +231,6 @@ class WiSARDClassifier(BaseEstimator, ClassifierMixin, WiSARDEstimator):
         self._classes, y = np.unique(y, return_inverse=True)
         self._nclasses = len(self._classes)
         for cl in self._classes:
-            #self._wiznet[cl] = [VRam(self._nloc) for _ in range(self._nrams)] alternative Ram implementations
-            #self._wiznet[cl] = [SRam(self._nloc) for _ in range(self._nrams)] 
             self._wiznet[cl] = [WRam() for _ in range(self._nrams)] 
         if self._maptype=="random":                 # random mapping
             np.random.shuffle(self._mapping)
